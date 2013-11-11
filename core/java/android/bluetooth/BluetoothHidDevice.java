@@ -70,18 +70,6 @@ public final class BluetoothHidDevice implements BluetoothProfile {
     public static final byte REPORT_TYPE_FEATURE = (byte) 3;
 
     /**
-     * Constants representing error response for Set Report.
-     *
-     * @see BluetoothHidDeviceCallback#onSetReport(byte, byte, byte[])
-     */
-    public static final byte ERROR_RSP_SUCCESS = (byte) 0;
-    public static final byte ERROR_RSP_NOT_READY = (byte) 1;
-    public static final byte ERROR_RSP_INVALID_RPT_ID = (byte) 2;
-    public static final byte ERROR_RSP_UNSUPPORTED_REQ = (byte) 3;
-    public static final byte ERROR_RSP_INVALID_PARAM = (byte) 4;
-    public static final byte ERROR_RSP_UNKNOWN = (byte) 14;
-
-    /**
      * Constants representing protocol mode used set by host. Default is always
      * {@link #PROTOCOL_REPORT_MODE} unless notified otherwise.
      *
@@ -148,21 +136,18 @@ public final class BluetoothHidDevice implements BluetoothProfile {
 
         public void onBluetoothStateChange(boolean up) {
             Log.d(TAG, "onBluetoothStateChange: up=" + up);
+
             synchronized (mConnection) {
                 if (!up) {
-                    Log.d(TAG,"Unbinding service...");
                     mService = null;
                     mContext.unbindService(mConnection);
                 } else {
-                    try {
-                        if (mService == null) {
-                            Log.d(TAG,"Binding HID Device service...");
-                            doBind();
+                    if (mService == null) {
+                        Log.v(TAG, "Binding service");
+                        if (!mContext.bindService(new Intent(IBluetoothHidDevice.class.getName()),
+                            mConnection, 0)) {
+                            Log.e(TAG, "Could not bind service");
                         }
-                    } catch (IllegalStateException e) {
-                        Log.e(TAG,"onBluetoothStateChange: could not bind to HID Dev service: ", e);
-                    } catch (SecurityException e) {
-                        Log.e(TAG,"onBluetoothStateChange: could not bind to HID Dev service: ", e);
                     }
                 }
             }
@@ -194,7 +179,7 @@ public final class BluetoothHidDevice implements BluetoothProfile {
     };
 
     BluetoothHidDevice(Context context, ServiceListener listener) {
-        Log.v(TAG, "BluetoothHidDevice");
+        Log.v(TAG, "BluetoothInputDevice()");
 
         mContext = context;
         mServiceListener = listener;
@@ -209,19 +194,10 @@ public final class BluetoothHidDevice implements BluetoothProfile {
             }
         }
 
-        doBind();
-    }
-
-    boolean doBind() {
-        Intent intent = new Intent(IBluetoothHidDevice.class.getName());
-        ComponentName comp = intent.resolveSystemService(mContext.getPackageManager(), 0);
-        intent.setComponent(comp);
-        if (comp == null || !mContext.bindService(intent, mConnection, 0)) {
-            Log.e(TAG, "Could not bind to Bluetooth HID Device Service with " + intent);
-            return false;
+        if (!context.bindService(new Intent(IBluetoothHidDevice.class.getName()),
+            mConnection, 0)) {
+            Log.e(TAG, "Could not bind service");
         }
-        Log.d(TAG, "Bound to HID Device Service");
-        return true;
     }
 
     void close() {
@@ -398,17 +374,16 @@ public final class BluetoothHidDevice implements BluetoothProfile {
      * Sends error handshake message as reply for invalid SET_REPORT request
      * from {@link BluetoothHidDeviceCallback#onSetReport(byte, byte, byte[])}.
      *
-     * @param error Error to be sent for SET_REPORT via HANDSHAKE.
      * @return
      */
-    public boolean reportError(byte error) {
-        Log.v(TAG, "reportError(): error = " + error);
+    public boolean reportError() {
+        Log.v(TAG, "reportError()");
 
         boolean result = false;
 
         if (mService != null) {
             try {
-                result = mService.reportError(error);
+                result = mService.reportError();
             } catch (RemoteException e) {
                 Log.e(TAG, e.toString());
             }
