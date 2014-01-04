@@ -7055,6 +7055,12 @@ public final class Settings {
          */
         public static final String CUSTOM_CARRIER_LABEL = "custom_carrier_label";
 
+        /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
     }
 
     /**
