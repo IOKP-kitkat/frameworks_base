@@ -7257,6 +7257,12 @@ public final class Settings {
          */
         public static final String ENABLE_NAVRING = "enable_navring";
 
+        /**
+         * Allows to show the background activity back the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SEE_THROUGH = "lockscreen_see_through";
+
     }
 
     /**
