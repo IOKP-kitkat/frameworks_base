@@ -27,7 +27,10 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+<<<<<<< HEAD
+=======
 import android.net.Uri;
+>>>>>>> e29752f... [1/2] Notifictation counter
 import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -55,6 +58,8 @@ public class StatusBarIconView extends AnimatedImageView {
     private String mNumberText;
     private Notification mNotification;
     private boolean mShowNotificationCount;
+<<<<<<< HEAD
+=======
     private boolean mAttached;
 
     private ContentObserver mSettingsObserver = new ContentObserver(new Handler()) {
@@ -70,6 +75,7 @@ public class StatusBarIconView extends AnimatedImageView {
             apply();
         };
     };
+>>>>>>> e29752f... [1/2] Notifictation counter
 
     public StatusBarIconView(Context context, String slot, Notification notification) {
         super(context);
@@ -87,6 +93,9 @@ public class StatusBarIconView extends AnimatedImageView {
         mShowNotificationCount = Settings.AOKP.getInt(mContext.getContentResolver(),
                 Settings.AOKP.STATUSBAR_NOTIF_COUNT, 0) == 1;
         setContentDescription(notification);
+
+        SettingsObserver observer = new SettingsObserver(new Handler());
+        observer.observe();
 
         // We do not resize and scale system icons (on the right), only notification icons (on the
         // left).
@@ -132,6 +141,31 @@ public class StatusBarIconView extends AnimatedImageView {
     }
 
     private boolean set(StatusBarIcon icon, boolean force) {
+<<<<<<< HEAD
+        final boolean iconEquals = mIcon != null
+                && streq(mIcon.iconPackage, icon.iconPackage)
+                && mIcon.iconId == icon.iconId;
+        final boolean levelEquals = iconEquals
+                && mIcon.iconLevel == icon.iconLevel;
+        final boolean visibilityEquals = mIcon != null
+                && mIcon.visible == icon.visible;
+        final boolean numberEquals = mIcon != null
+                && mIcon.number == icon.number;
+        mIcon = icon.clone();
+        setContentDescription(icon.contentDescription);
+        if (!iconEquals || force) {
+            if (!updateDrawable(false /* no clear */)) return false;
+        }
+        if (!levelEquals || force) {
+            setImageLevel(icon.iconLevel);
+        }
+
+        if (!numberEquals || force) {
+            if (icon.number > 0 && mShowNotificationCount) {
+                if (mNumberBackground == null) {
+                    mNumberBackground = getContext().getResources().getDrawable(
+                            R.drawable.ic_notification_overlay);
+=======
         if (icon != null) {
             final boolean iconEquals = mIcon != null
                     && streq(mIcon.iconPackage, icon.iconPackage)
@@ -166,13 +200,21 @@ public class StatusBarIconView extends AnimatedImageView {
                 } else {
                     mNumberBackground = null;
                     mNumberText = null;
+>>>>>>> e29752f... [1/2] Notifictation counter
                 }
                 invalidate();
             }
+<<<<<<< HEAD
+            invalidate();
+        }
+        if (!visibilityEquals || force) {
+            setVisibility(icon.visible ? VISIBLE : GONE);
+=======
             if (!visibilityEquals || force) {
                 setVisibility(icon.visible ? VISIBLE : GONE);
             }
             return true;
+>>>>>>> e29752f... [1/2] Notifictation counter
         }
         return false;
     }
@@ -350,6 +392,30 @@ public class StatusBarIconView extends AnimatedImageView {
             + " notification=" + mNotification + ")";
     }
 
+<<<<<<< HEAD
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.AOKP.getUriFor(Settings.AOKP.STATUSBAR_NOTIF_COUNT),
+                    false, this);
+        }
+
+        void unobserve() {
+            mContext.getContentResolver().unregisterContentObserver(this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mShowNotificationCount = Settings.AOKP.getInt(
+                    mContext.getContentResolver(),
+                    Settings.AOKP.STATUSBAR_NOTIF_COUNT, 0) == 1;
+            set(mIcon, true);
+        }
+=======
     protected void updateSettings() {
         mShowNotificationCount = Settings.AOKP.getInt(
                 mContext.getContentResolver(),
@@ -358,5 +424,6 @@ public class StatusBarIconView extends AnimatedImageView {
 
     protected void apply() {
         set(mIcon, true);
+>>>>>>> e29752f... [1/2] Notifictation counter
     }
 }
