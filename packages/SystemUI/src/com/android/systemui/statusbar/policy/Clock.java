@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -73,7 +74,20 @@ public class Clock extends TextView implements DemoMode {
 
     protected int mClockStyle = STYLE_CLOCK_RIGHT;
 
-    protected int mClockColor = getResources().getColor(R.color.status_bar_clock_color);
+    private ContentObserver mSettingsObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+            updateSettings();
+            updateView();
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            updateSettings();
+            updateView();
+        }
+    };
+    private int mClockColor;
 
     public Clock(Context context) {
         this(context, null);
@@ -94,6 +108,7 @@ public class Clock extends TextView implements DemoMode {
         if (!mAttached) {
             mAttached = true;
             IntentFilter filter = new IntentFilter();
+            ContentResolver resolver = mContext.getContentResolver();
 
             filter.addAction(Intent.ACTION_TIME_TICK);
             filter.addAction(Intent.ACTION_TIME_CHANGED);
@@ -102,6 +117,18 @@ public class Clock extends TextView implements DemoMode {
             filter.addAction(Intent.ACTION_USER_SWITCHED);
 
             getContext().registerReceiver(mIntentReceiver, filter, null, getHandler());
+            resolver.registerContentObserver(Settings.AOKP
+                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_AM_PM_STYLE),
+                    false, mSettingsObserver);
+            resolver.registerContentObserver(Settings.AOKP
+                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_STYLE),
+                    false, mSettingsObserver);
+            resolver.registerContentObserver(Settings.AOKP
+                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_COLOR),
+                    false, mSettingsObserver);
+            resolver.registerContentObserver(Settings.AOKP
+                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_WEEKDAY),
+                    false, mSettingsObserver);
         }
 
         // NOTE: It's safe to do these after registering the receiver since the receiver always runs
@@ -109,18 +136,17 @@ public class Clock extends TextView implements DemoMode {
 
         // The time zone may have changed while the receiver wasn't registered, so update the Time
         mCalendar = Calendar.getInstance(TimeZone.getDefault());
-
-        SettingsObserver settingsObserver = new SettingsObserver(new Handler());
-        settingsObserver.observe();
         updateSettings();
+        updateView();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mAttached) {
-            getContext().unregisterReceiver(mIntentReceiver);
             mAttached = false;
+            getContext().unregisterReceiver(mIntentReceiver);
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
         }
     }
 
@@ -217,34 +243,6 @@ public class Clock extends TextView implements DemoMode {
         return formatted;
     }
 
-    protected class SettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
-            super(handler);
-        }
-
-        void observe() {
-            ContentResolver resolver = mContext.getContentResolver();
-            resolver.registerContentObserver(Settings.AOKP
-                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_AM_PM_STYLE),
-                    false, this);
-            resolver.registerContentObserver(Settings.AOKP
-                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_STYLE), false,
-                    this);
-            resolver.registerContentObserver(Settings.AOKP
-                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_COLOR), false,
-                    this);
-            resolver.registerContentObserver(Settings.AOKP
-                    .getUriFor(Settings.AOKP.STATUSBAR_CLOCK_WEEKDAY), false,
-                    this);
-            updateSettings();
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            updateSettings();
-        }
-    }
-
     protected void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
         int defaultColor = getResources().getColor(R.color.status_bar_clock_color);
@@ -255,15 +253,16 @@ public class Clock extends TextView implements DemoMode {
                 Settings.AOKP.STATUSBAR_CLOCK_STYLE, STYLE_CLOCK_RIGHT);
         mWeekdayStyle = Settings.AOKP.getInt(resolver,
                 Settings.AOKP.STATUSBAR_CLOCK_WEEKDAY, WEEKDAY_STYLE_GONE);
-
         mClockColor = Settings.AOKP.getInt(resolver,
                 Settings.AOKP.STATUSBAR_CLOCK_COLOR, defaultColor);
         if (mClockColor == Integer.MIN_VALUE) {
             // flag to reset the color
             mClockColor = defaultColor;
         }
-        setTextColor(mClockColor);
+    }
 
+    protected void updateView() {
+        setTextColor(mClockColor);
         updateClockVisibility();
         updateClock();
     }
