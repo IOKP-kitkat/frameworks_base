@@ -17,7 +17,6 @@
 package com.android.keyguard;
 
 import android.content.Context;
-import android.provider.Settings;
 import android.text.method.SingleLineTransformationMethod;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -87,18 +86,7 @@ public class CarrierText extends TextView {
     }
 
     protected void updateCarrierText(State simState, CharSequence plmn, CharSequence spn) {
-        CharSequence text = getCarrierTextForSimState(simState, plmn, spn);
-        String customLabel = Settings.AOKP.getString(getContext().getContentResolver(),
-                Settings.AOKP.CUSTOM_CARRIER_LABEL);
-        if (customLabel == null || customLabel.length() == 0) {
-            if (KeyguardViewManager.USE_UPPER_CASE) {
-                setText(text != null ? text.toString().toUpperCase() : null);
-            } else {
-                setText(text);
-            }
-        } else {
-            setText(customLabel);
-        }
+        setText(getCarrierTextForSimState(simState, plmn, spn));
     }
 
     @Override
