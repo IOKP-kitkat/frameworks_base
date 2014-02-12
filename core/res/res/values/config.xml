@@ -1342,7 +1342,7 @@
             16 - App switch
          For example, a device with Home, Back and Menu keys would set this
          config to 7. -->
-    <integer name="config_deviceHardwareKeys">15</integer>
+    <integer name="config_deviceHardwareKeys">0</integer>
 
     <!-- Workaround for devices with broken keyboards -->
     <bool name="config_forceDisableHardwareKeyboard">false</bool>
@@ -1351,5 +1351,9 @@
          the wallpaper width suggestion by the launcher may be too large for
          the GPU to handle. -->
     <integer name="config_wallpaperMaxWidth">-1</integer>
+
+    <!-- Timeout in MS for how long you have to long-press the back key to
+         kill the foreground app. -->
+    <integer name="config_backKillTimeout">500</integer>
 
 </resources>
